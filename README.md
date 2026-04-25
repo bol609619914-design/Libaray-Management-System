@@ -16,9 +16,9 @@ LibraFlow 是一个基于 Spring Boot、MyBatis-Plus、MySQL 和 Vue 3 的现代
 
 ![超级管理员工作台](docs/images/super-dashboard.png)
 
-### 通知交互
+### 登录页面
 
-![通知交互](docs/images/super-dashboard-notice.png)
+![登录页面](docs/images/login-page.png)
 
 ## 技术栈
 
