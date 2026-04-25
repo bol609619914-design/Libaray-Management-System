@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.library.dto.LoginRequest;
 import com.example.library.dto.PasswordChangeRequest;
 import com.example.library.dto.ProfileUpdateRequest;
+import com.example.library.dto.RegisterRequest;
 import com.example.library.entity.User;
 import com.example.library.exception.BusinessException;
 import com.example.library.mapper.UserMapper;
@@ -35,6 +36,25 @@ public class AuthService {
         if (!"ACTIVE".equals(user.getStatus())) {
             throw new BusinessException(403, "账号已被禁用或限制");
         }
+        String token = jwtService.createToken(new CurrentUser(user.getId(), user.getUsername(), user.getRole()));
+        return new LoginResponse(token, UserVO.from(user));
+    }
+
+    @Transactional
+    public LoginResponse register(RegisterRequest request) {
+        Long count = userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getUsername, request.username()));
+        if (count != null && count > 0) {
+            throw new BusinessException("用户名已存在");
+        }
+        User user = new User();
+        user.setUsername(request.username());
+        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setRealName(request.realName());
+        user.setPhone(request.phone());
+        user.setEmail(request.email());
+        user.setRole("READER");
+        user.setStatus("ACTIVE");
+        userMapper.insert(user);
         String token = jwtService.createToken(new CurrentUser(user.getId(), user.getUsername(), user.getRole()));
         return new LoginResponse(token, UserVO.from(user));
     }
@@ -71,4 +91,3 @@ public class AuthService {
         return user;
     }
 }
-

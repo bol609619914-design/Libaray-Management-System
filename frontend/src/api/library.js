@@ -2,6 +2,7 @@ import { http } from './http'
 
 export const api = {
   login: (data) => http.post('/auth/login', data),
+  register: (data) => http.post('/auth/register', data),
   me: () => http.get('/auth/me'),
   updateProfile: (data) => http.put('/auth/profile', data),
   changePassword: (data) => http.put('/auth/password', data),
@@ -36,4 +37,3 @@ export const api = {
   updateConfig: (data) => http.put('/configs', data),
   logs: () => http.get('/logs')
 }
-

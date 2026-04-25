@@ -80,7 +80,7 @@
         <div class="section-heading">
           <h2>读者概览</h2>
           <select aria-label="统计周期">
-            <option>本月</option>
+            <option>月</option>
           </select>
         </div>
         <div class="stat-pair">

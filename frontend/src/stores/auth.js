@@ -18,6 +18,13 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem('library_token', this.token)
       localStorage.setItem('library_user', JSON.stringify(this.user))
     },
+    async register(form) {
+      const res = await api.register(form)
+      this.token = res.data.token
+      this.user = res.data.user
+      localStorage.setItem('library_token', this.token)
+      localStorage.setItem('library_user', JSON.stringify(this.user))
+    },
     async refreshMe() {
       const res = await api.me()
       this.user = res.data
@@ -31,4 +38,3 @@ export const useAuthStore = defineStore('auth', {
     }
   }
 })
-

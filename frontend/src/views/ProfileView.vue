@@ -8,8 +8,7 @@
         <p>{{ roleText }} · 证号 LF-{{ String(auth.user?.id || 0).padStart(5, '0') }}</p>
       </div>
       <div class="profile-badges" aria-label="账户状态">
-        <span>账号正常</span>
-        <span>信用良好</span>
+        <span v-for="badge in badges" :key="badge">{{ badge }}</span>
       </div>
     </article>
 
@@ -73,6 +72,11 @@ const roleEyebrow = computed(() => ({
   LIBRARIAN: '馆员档案',
   SUPER_ADMIN: '系统管理员档案'
 }[auth.role] || '个人档案'))
+const badges = computed(() => {
+  if (auth.role === 'LIBRARIAN') return ['账号正常', '当班馆员']
+  if (auth.role === 'SUPER_ADMIN') return ['账号正常', '最高权限']
+  return ['账号正常', '信用良好']
+})
 const stats = computed(() => {
   if (auth.role === 'LIBRARIAN') {
     return [

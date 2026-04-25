@@ -4,6 +4,7 @@ import com.example.library.common.ApiResponse;
 import com.example.library.dto.LoginRequest;
 import com.example.library.dto.PasswordChangeRequest;
 import com.example.library.dto.ProfileUpdateRequest;
+import com.example.library.dto.RegisterRequest;
 import com.example.library.security.CurrentUser;
 import com.example.library.service.AuthService;
 import com.example.library.vo.LoginResponse;
@@ -31,6 +32,11 @@ public class AuthController {
         return ApiResponse.ok(authService.login(request));
     }
 
+    @PostMapping("/register")
+    public ApiResponse<LoginResponse> register(@Valid @RequestBody RegisterRequest request) {
+        return ApiResponse.ok(authService.register(request));
+    }
+
     @GetMapping("/me")
     public ApiResponse<UserVO> me(@AuthenticationPrincipal CurrentUser user) {
         return ApiResponse.ok(authService.me(user));
@@ -47,4 +53,3 @@ public class AuthController {
         return ApiResponse.ok();
     }
 }
-
