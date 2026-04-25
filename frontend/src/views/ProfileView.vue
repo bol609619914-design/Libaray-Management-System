@@ -1,28 +1,60 @@
 <template>
-  <section class="content-split">
-    <form class="section-block form-stack" @submit.prevent="saveProfile">
+  <section class="profile-layout">
+    <article class="profile-hero">
+      <div class="profile-avatar" aria-hidden="true">{{ avatarInitial }}</div>
+      <div>
+        <p class="eyebrow">{{ roleEyebrow }}</p>
+        <h2>{{ profile.realName || auth.user?.realName }}</h2>
+        <p>{{ roleText }} · 证号 LF-{{ String(auth.user?.id || 0).padStart(5, '0') }}</p>
+      </div>
+      <div class="profile-badges" aria-label="账户状态">
+        <span>账号正常</span>
+        <span>信用良好</span>
+      </div>
+    </article>
+
+    <section class="profile-stats" aria-label="借阅概览">
+      <article v-for="item in stats" :key="item.label">
+        <span>{{ item.label }}</span>
+        <strong>{{ item.value }}</strong>
+        <small>{{ item.hint }}</small>
+      </article>
+    </section>
+
+    <div class="profile-forms">
+      <form class="section-block form-stack profile-card" @submit.prevent="saveProfile">
       <div class="section-heading">
         <h2>个人资料</h2>
+        <span class="status blue">基础信息</span>
       </div>
-      <label>姓名<input v-model="profile.realName" required /></label>
-      <label>电话<input v-model="profile.phone" type="tel" /></label>
-      <label>邮箱<input v-model="profile.email" type="email" /></label>
-      <button class="primary-btn" type="submit">保存资料</button>
-    </form>
-    <form class="section-block form-stack" @submit.prevent="changePassword">
+      <div class="field-grid">
+        <label>姓名<input v-model="profile.realName" required /></label>
+        <label>电话<input v-model="profile.phone" type="tel" /></label>
+        <label class="wide-field">邮箱<input v-model="profile.email" type="email" /></label>
+      </div>
+      <div class="form-actions">
+        <button class="primary-btn" type="submit">保存资料</button>
+      </div>
+      </form>
+
+      <form class="section-block form-stack profile-card security-card" @submit.prevent="changePassword">
       <div class="section-heading">
         <h2>修改密码</h2>
+        <span class="status orange">安全设置</span>
       </div>
       <label>原密码<input v-model="password.oldPassword" type="password" autocomplete="current-password" required /></label>
       <label>新密码<input v-model="password.newPassword" type="password" autocomplete="new-password" required /></label>
-      <button class="primary-btn" type="submit">更新密码</button>
+      <div class="form-actions">
+        <button class="primary-btn" type="submit">更新密码</button>
+      </div>
       <p v-if="message" class="success-text" role="status">{{ message }}</p>
-    </form>
+      </form>
+    </div>
   </section>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { api } from '../api/library'
 import { useAuthStore } from '../stores/auth'
 
@@ -30,6 +62,41 @@ const auth = useAuthStore()
 const message = ref('')
 const profile = reactive({ realName: '', phone: '', email: '' })
 const password = reactive({ oldPassword: '', newPassword: '' })
+const avatarInitial = computed(() => profile.realName?.slice(0, 1) || auth.user?.realName?.slice(0, 1) || '读')
+const roleText = computed(() => ({
+  READER: '普通读者',
+  LIBRARIAN: '图书管理员',
+  SUPER_ADMIN: '超级管理员'
+}[auth.role] || '读者'))
+const roleEyebrow = computed(() => ({
+  READER: '读者档案',
+  LIBRARIAN: '馆员档案',
+  SUPER_ADMIN: '系统管理员档案'
+}[auth.role] || '个人档案'))
+const stats = computed(() => {
+  if (auth.role === 'LIBRARIAN') {
+    return [
+      { label: '今日处理', value: '18', hint: '借还与续借' },
+      { label: '待核验', value: '4', hint: '异常归还' },
+      { label: '逾期跟进', value: '6', hint: '需提醒读者' },
+      { label: '服务评分', value: '98', hint: '状态良好' }
+    ]
+  }
+  if (auth.role === 'SUPER_ADMIN') {
+    return [
+      { label: '管理员', value: '2', hint: '账号正常' },
+      { label: '系统配置', value: '3', hint: '规则生效中' },
+      { label: '操作日志', value: '24', hint: '今日记录' },
+      { label: '备份状态', value: 'OK', hint: '最近一次正常' }
+    ]
+  }
+  return [
+    { label: '当前借阅', value: '3', hint: '本月 1 本新增' },
+    { label: '我的预约', value: '2', hint: '1 本待取书' },
+    { label: '到期提醒', value: '1', hint: '请及时续借' },
+    { label: '信用积分', value: '96', hint: '状态良好' }
+  ]
+})
 
 async function saveProfile() {
   await api.updateProfile(profile)

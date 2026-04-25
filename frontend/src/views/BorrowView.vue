@@ -1,15 +1,30 @@
 <template>
-  <section class="table-panel">
-    <div class="section-heading">
-      <h2>{{ canManage ? '全部借阅业务' : '我的借阅记录' }}</h2>
-      <select v-model="status" aria-label="借阅状态筛选" @change="load">
-        <option value="">全部状态</option>
-        <option value="BORROWED">在借</option>
-        <option value="OVERDUE">逾期</option>
-        <option value="RETURNED">已归还</option>
-      </select>
+  <section class="borrow-page">
+    <div class="borrow-summary">
+      <article v-for="item in summaryCards" :key="item.label" class="borrow-stat">
+        <span>{{ item.label }}</span>
+        <strong>{{ item.value }}</strong>
+        <small>{{ item.hint }}</small>
+      </article>
     </div>
-    <div class="responsive-table">
+
+    <section class="table-panel borrow-panel">
+      <div class="borrow-panel-head">
+        <div>
+          <h2>{{ canManage ? '借阅业务列表' : '我的借阅记录' }}</h2>
+          <p>{{ canManage ? '集中处理线下还书、人工续借、逾期罚款与异常记录。' : '查看当前借阅、历史归还、续借和罚款状态。' }}</p>
+        </div>
+        <div class="borrow-tools">
+          <select v-model="status" aria-label="借阅状态筛选" @change="load">
+            <option value="">全部状态</option>
+            <option value="BORROWED">在借</option>
+            <option value="OVERDUE">逾期</option>
+            <option value="RETURNED">已归还</option>
+          </select>
+          <RouterLink class="ghost-btn" to="/books">{{ canManage ? '办理读者借阅' : '去借书' }}</RouterLink>
+        </div>
+      </div>
+      <div class="responsive-table">
       <table>
         <thead>
           <tr>
@@ -23,7 +38,7 @@
             <th>操作</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody v-if="records.length">
           <tr v-for="record in records" :key="record.id">
             <td>#{{ record.id }}</td>
             <td>{{ record.userId }}</td>
@@ -42,7 +57,14 @@
           </tr>
         </tbody>
       </table>
-    </div>
+      </div>
+      <div v-if="!records.length" class="empty-state">
+        <div class="empty-icon" aria-hidden="true">LF</div>
+        <h3>{{ emptyTitle }}</h3>
+        <p>{{ canManage ? '当前筛选条件下没有待处理记录。管理员只能为读者办理借阅、还书、续借和罚款处理。' : '你当前没有匹配的借阅记录，可以先去检索并借阅一本书。' }}</p>
+        <RouterLink class="primary-btn" to="/books">{{ canManage ? '进入编目与流通' : '检索图书' }}</RouterLink>
+      </div>
+    </section>
   </section>
 </template>
 
@@ -55,6 +77,17 @@ const auth = useAuthStore()
 const records = ref([])
 const status = ref('')
 const canManage = computed(() => ['LIBRARIAN', 'SUPER_ADMIN'].includes(auth.role))
+const activeCount = computed(() => records.value.filter((item) => item.status === 'BORROWED').length)
+const overdueCount = computed(() => records.value.filter((item) => item.status === 'OVERDUE').length)
+const returnedCount = computed(() => records.value.filter((item) => item.status === 'RETURNED').length)
+const unpaidFine = computed(() => records.value.filter((item) => item.fineStatus === 'UNPAID').reduce((sum, item) => sum + Number(item.fineAmount || 0), 0).toFixed(2))
+const summaryCards = computed(() => [
+  { label: canManage.value ? '业务记录' : '全部记录', value: records.value.length, hint: '当前筛选结果' },
+  { label: '在借', value: activeCount.value, hint: '可线上续借' },
+  { label: '逾期', value: overdueCount.value, hint: '需要跟进提醒' },
+  { label: canManage.value ? '未缴罚款' : '罚款金额', value: `¥${unpaidFine.value}`, hint: returnedCount.value ? `${returnedCount.value} 条已归还` : '暂无归还记录' }
+])
+const emptyTitle = computed(() => status.value ? `暂无${statusText(status.value)}记录` : '暂无借阅业务记录')
 
 function statusText(value) {
   return { BORROWED: '在借', OVERDUE: '逾期', RETURNED: '已归还' }[value] || value
@@ -82,4 +115,3 @@ async function pay(record) {
 
 onMounted(load)
 </script>
-

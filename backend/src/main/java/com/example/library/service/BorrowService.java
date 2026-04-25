@@ -48,7 +48,12 @@ public class BorrowService {
 
     @Transactional
     public BorrowRecord borrow(CurrentUser operator, BorrowRequest request) {
-        Long userId = request.userId() == null ? operator.id() : request.userId();
+        Long userId = request.userId();
+        if ("READER".equals(operator.role())) {
+            userId = operator.id();
+        } else if (userId == null) {
+            throw new BusinessException("管理员办理借阅必须指定读者");
+        }
         Book book = bookMapper.selectById(request.bookId());
         if (book == null || !"ON_SHELF".equals(book.getStatus())) {
             throw new BusinessException("图书不存在或未上架");

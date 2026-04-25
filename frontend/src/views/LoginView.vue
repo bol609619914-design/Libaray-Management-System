@@ -1,19 +1,25 @@
 <template>
   <main class="login-page">
     <section class="login-copy" aria-labelledby="login-title">
-      <p class="eyebrow">Smart Library Console</p>
-      <h1 id="login-title">图书馆管理系统</h1>
-      <p>统一管理图书检索、借阅流转、逾期罚款、读者反馈、权限配置与公告发布。</p>
-      <div class="demo-accounts" aria-label="演示账号">
-        <span>reader / reader123</span>
-        <span>librarian / admin123</span>
-        <span>superadmin / root123</span>
+      <div class="login-brand">
+        <span class="brand-mark">LF</span>
+        <strong>LibraFlow</strong>
+      </div>
+      <h1 id="login-title">现代图书馆管理系统</h1>
+      <p>高效 · 智能 · 连接每一座图书馆</p>
+      <div class="login-illustration" aria-hidden="true">
+        <div class="shelf">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <div class="desk-screen"></div>
+        <div class="desk-base"></div>
+        <div class="light-disc"></div>
       </div>
     </section>
     <form class="login-card" @submit.prevent="submit" aria-describedby="login-helper">
       <div>
-        <h2>登录</h2>
-        <p id="login-helper">请选择角色账号进入对应工作台。</p>
+        <h2>欢迎登录 LibraFlow</h2>
+        <p id="login-helper">请使用您的账号登录系统</p>
       </div>
       <label>
         用户名
@@ -25,10 +31,19 @@
       </label>
       <label class="checkbox-row">
         <input v-model="showPassword" type="checkbox" />
-        显示密码
+        记住我
+        <a href="#" @click.prevent>忘记密码?</a>
       </label>
       <p v-if="error" class="form-error" role="alert">{{ error }}</p>
       <button class="primary-btn" type="submit" :disabled="loading">{{ loading ? '登录中...' : '进入系统' }}</button>
+      <div class="login-divider"><span>或</span></div>
+      <button class="sso-btn" type="button">SSO 单点登录</button>
+      <a class="contact-admin" href="#" @click.prevent>联系管理员</a>
+      <div class="demo-accounts" aria-label="演示账号">
+        <span>reader / reader123</span>
+        <span>librarian / admin123</span>
+        <span>superadmin / root123</span>
+      </div>
     </form>
   </main>
 </template>
@@ -58,4 +73,3 @@ async function submit() {
   }
 }
 </script>
-

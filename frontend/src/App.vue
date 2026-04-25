@@ -3,10 +3,10 @@
   <div v-else class="app-shell">
     <aside class="sidebar" aria-label="主导航">
       <RouterLink to="/" class="brand" aria-label="返回工作台">
-        <span class="brand-mark">L</span>
+        <span class="brand-mark">LF</span>
         <span>
-          <strong>图书馆系统</strong>
-          <small>{{ roleName }}</small>
+          <strong>LibraFlow</strong>
+          <small>现代图书馆管理系统</small>
         </span>
       </RouterLink>
       <nav class="nav-list">
@@ -16,43 +16,59 @@
         </RouterLink>
       </nav>
     </aside>
-    <main class="main-panel" id="main">
+    <main ref="mainPanel" class="main-panel" id="main">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">Library Operations</p>
-          <h1>{{ pageTitle }}</h1>
-        </div>
-        <div class="user-chip">
-          <span>{{ auth.user?.realName }}</span>
-          <button type="button" @click="logout">退出</button>
+        <label class="top-search">
+          <span class="sr-only">全局搜索</span>
+          <Search aria-hidden="true" :size="18" />
+          <input placeholder="搜索书名 / ISBN / 条码 / 读者证号" />
+        </label>
+        <div class="top-actions">
+          <button class="circle-button" type="button" aria-label="查看通知">
+            <Bell aria-hidden="true" :size="18" />
+            <span class="dot" aria-hidden="true"></span>
+          </button>
+          <div class="user-chip" aria-label="当前用户">
+            <span class="avatar" aria-hidden="true">{{ avatarInitial }}</span>
+            <span>{{ auth.user?.realName }}</span>
+            <ChevronDown aria-hidden="true" :size="15" />
+          </div>
+          <button class="circle-button" type="button" aria-label="退出登录" @click="logout">
+            <LogOut aria-hidden="true" :size="17" />
+          </button>
         </div>
       </header>
+      <div class="page-heading">
+        <h1>{{ pageTitle }}</h1>
+        <p>{{ roleName }} · LibraFlow</p>
+      </div>
       <RouterView />
+      <footer class="app-footer">© 2024 LibraFlow 现代图书馆管理系统</footer>
     </main>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { BookOpen, ClipboardList, LayoutDashboard, Shield, UserCog, UserRound } from 'lucide-vue-next'
+import { Bell, BookOpen, ChevronDown, ClipboardList, LayoutDashboard, LogOut, Search, Shield, UserCog, UserRound } from 'lucide-vue-next'
 import { useAuthStore } from './stores/auth'
 
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
-
-const baseMenu = [
-  { path: '/', label: '首页工作台', icon: LayoutDashboard },
-  { path: '/books', label: '图书检索', icon: BookOpen },
-  { path: '/borrows', label: '借阅记录', icon: ClipboardList },
-  { path: '/profile', label: '个人资料', icon: UserRound }
-]
+const mainPanel = ref(null)
 
 const menu = computed(() => {
-  const items = [...baseMenu]
-  if (['LIBRARIAN', 'SUPER_ADMIN'].includes(auth.role)) items.splice(3, 0, { path: '/admin', label: '馆员管理', icon: UserCog })
-  if (auth.role === 'SUPER_ADMIN') items.splice(4, 0, { path: '/super', label: '系统权限', icon: Shield })
+  const canManage = ['LIBRARIAN', 'SUPER_ADMIN'].includes(auth.role)
+  const items = [
+    { path: '/', label: '工作台', icon: LayoutDashboard },
+    { path: '/books', label: canManage ? '编目管理' : '资源检索', icon: BookOpen },
+    { path: '/borrows', label: canManage ? '借阅业务' : '我的借阅', icon: ClipboardList },
+    { path: '/profile', label: '个人中心', icon: UserRound }
+  ]
+  if (canManage) items.splice(3, 0, { path: '/admin', label: auth.role === 'SUPER_ADMIN' ? '馆员管理' : '读者管理', icon: UserCog })
+  if (auth.role === 'SUPER_ADMIN') items.splice(4, 0, { path: '/super', label: '系统设置', icon: Shield })
   return items
 })
 
@@ -63,10 +79,18 @@ const roleName = computed(() => ({
 }[auth.role] || '访客'))
 
 const pageTitle = computed(() => menu.value.find((item) => item.path === route.path)?.label || '图书馆管理系统')
+const avatarInitial = computed(() => auth.user?.realName?.slice(0, 1) || 'U')
 
 function logout() {
   auth.logout()
   router.push('/login')
 }
-</script>
 
+watch(
+  () => route.fullPath,
+  async () => {
+    await nextTick()
+    mainPanel.value?.scrollTo({ top: 0, left: 0 })
+  }
+)
+</script>
