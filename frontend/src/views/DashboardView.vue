@@ -34,7 +34,9 @@
       </div>
       <div class="recommend-grid">
         <article v-for="book in recommendedBooks" :key="book.title" class="recommend-card">
-          <div class="book-cover" :style="{ '--cover': book.color }">{{ book.short }}</div>
+          <div class="book-cover has-image">
+            <img :src="book.cover" :alt="`${book.title}封面`" />
+          </div>
           <strong>{{ book.title }}</strong>
           <span>{{ book.author }}</span>
           <small>★★★★★ {{ book.score }}</small>
@@ -49,7 +51,9 @@
       </div>
       <ul class="recent-list">
         <li v-for="item in recentBooks" :key="item.title">
-          <div class="mini-cover" :style="{ '--cover': item.color }"></div>
+          <div class="mini-cover has-image">
+            <img :src="item.cover" :alt="`${item.title}封面`" />
+          </div>
           <div>
             <strong>{{ item.title }}</strong>
             <p>{{ item.author }} · 浏览于 {{ item.time }}</p>
@@ -67,7 +71,9 @@
         </div>
         <ul class="todo-list">
           <li v-for="item in todoItems" :key="item.code">
-            <div class="mini-cover" :style="{ '--cover': item.color }"></div>
+            <div class="mini-cover has-image">
+              <img :src="item.cover" :alt="`${item.title}封面`" />
+            </div>
             <div>
               <strong>{{ item.title }}</strong>
               <p>条码 {{ item.code }} · {{ item.note }}</p>
@@ -151,22 +157,22 @@ const readerStats = [
   { label: '到期提醒', value: 1, action: '即将到期 ›', path: '/borrows' }
 ]
 const recommendedBooks = [
-  { title: '人类简史', author: '尤瓦尔·赫拉利', score: '9.1', short: '人类', color: '#f6efe2' },
-  { title: '置身事内', author: '中国政府与经济发展', score: '8.7', short: '置身', color: '#f3dfcc' },
-  { title: '被讨厌的勇气', author: '岸见一郎', score: '8.6', short: '勇气', color: '#2b78d0' },
-  { title: '乡土中国', author: '费孝通', score: '8.8', short: '乡土', color: '#efe4cf' },
-  { title: '未来简史', author: '尤瓦尔·赫拉利', score: '8.9', short: '未来', color: '#111827' },
-  { title: '原则', author: '瑞·达利欧', score: '8.6', short: '原则', color: '#fafafa' }
+  { title: '人类简史', author: '尤瓦尔·赫拉利', score: '9.1', cover: '/covers/human-history.png' },
+  { title: '置身事内', author: '中国政府与经济发展', score: '8.7', cover: '/covers/ming-history.png' },
+  { title: '被讨厌的勇气', author: '岸见一郎', score: '8.6', cover: '/covers/ai-data.png' },
+  { title: '乡土中国', author: '费孝通', score: '8.8', cover: '/covers/fortress-literature.png' },
+  { title: '未来简史', author: '尤瓦尔·赫拉利', score: '8.9', cover: '/covers/future-history.png' },
+  { title: '原则', author: '瑞·达利欧', score: '8.6', cover: '/covers/computer-systems.png' }
 ]
 const recentBooks = [
-  { title: '围城', author: '钱钟书', time: '2024-05-20 15:30', color: '#2b5c8a' },
-  { title: '活着', author: '余华', time: '2024-05-19 10:21', color: '#254c5f' },
-  { title: '人性的弱点', author: '戴尔·卡耐基', time: '2024-05-18 09:14', color: '#d7d7d7' }
+  { title: '围城', author: '钱钟书', time: '2024-05-20 15:30', cover: '/covers/fortress-literature.png' },
+  { title: '活着', author: '余华', time: '2024-05-19 10:21', cover: '/covers/human-history.png' },
+  { title: '人性的弱点', author: '戴尔·卡耐基', time: '2024-05-18 09:14', cover: '/covers/ai-data.png' }
 ]
 const todoItems = [
-  { title: '数据库系统概论', code: 'B-20491', note: '预约到馆', stateText: '待取书', state: 'blue', color: '#1c55c9' },
-  { title: '人机交互设计', code: 'A-11352', note: '今日到期', stateText: '待提醒', state: 'orange', color: '#0a8f74' },
-  { title: '云计算导论', code: 'C-01983', note: '归还异常', stateText: '待核验', state: 'red', color: '#2a95d8' }
+  { title: '数据库系统概论', code: 'B-20491', note: '预约到馆', stateText: '待取书', state: 'blue', cover: '/covers/computer-systems.png' },
+  { title: '人机交互设计', code: 'A-11352', note: '今日到期', stateText: '待提醒', state: 'orange', cover: '/covers/ai-data.png' },
+  { title: '云计算导论', code: 'C-01983', note: '归还异常', stateText: '待核验', state: 'red', cover: '/covers/future-history.png' }
 ]
 const purchaseRows = [
   { no: '图书采购申请（第2024-045号）', user: '李老师', time: '2024-05-20 10:21', amount: '¥8,560.00', status: '审批中', statusClass: 'blue', action: '处理' },

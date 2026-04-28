@@ -66,6 +66,7 @@ public class DataInitializer implements CommandLineRunner {
             book("9787020002207", "围城", "钱锺书", literature.getId(), people.getId(), "经典,文学", 8);
             book("9787101106472", "万历十五年", "黄仁宇", history.getId(), people.getId(), "热门,历史", 6);
         }
+        seedBookCovers();
         if (announcementMapper.selectCount(null) == 0) {
             Announcement announcement = new Announcement();
             announcement.setTitle("图书馆系统试运行公告");
@@ -133,12 +134,37 @@ public class DataInitializer implements CommandLineRunner {
         book.setPublisherId(publisherId);
         book.setTagNames(tagNames);
         book.setPublishedDate(LocalDate.now().minusYears(3));
+        book.setCoverUrl(coverForIsbn(isbn));
         book.setSummary("馆藏样例图书，用于演示检索、借阅、续借、库存维护等业务流程。");
         book.setTotalStock(stock);
         book.setAvailableStock(stock);
         book.setShelfCode("A-" + categoryId + "-" + stock);
         book.setStatus("ON_SHELF");
         bookMapper.insert(book);
+    }
+
+    private void seedBookCovers() {
+        setCoverIfBlank("9787115546081", "/covers/computer-systems.png");
+        setCoverIfBlank("9787020002207", "/covers/fortress-literature.png");
+        setCoverIfBlank("9787101106472", "/covers/ming-history.png");
+    }
+
+    private void setCoverIfBlank(String isbn, String coverUrl) {
+        Book book = bookMapper.selectOne(new LambdaQueryWrapper<Book>().eq(Book::getIsbn, isbn).last("LIMIT 1"));
+        if (book == null || (book.getCoverUrl() != null && !book.getCoverUrl().isBlank())) {
+            return;
+        }
+        book.setCoverUrl(coverUrl);
+        bookMapper.updateById(book);
+    }
+
+    private String coverForIsbn(String isbn) {
+        return switch (isbn) {
+            case "9787115546081" -> "/covers/computer-systems.png";
+            case "9787020002207" -> "/covers/fortress-literature.png";
+            case "9787101106472" -> "/covers/ming-history.png";
+            default -> null;
+        };
     }
 
     private void config(String key, String value, String description) {
