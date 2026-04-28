@@ -40,17 +40,31 @@
         </thead>
         <tbody v-if="records.length">
           <tr v-for="record in records" :key="record.id">
-            <td>#{{ record.id }}</td>
-            <td>{{ record.userId }}</td>
-            <td>{{ record.bookId }}</td>
-            <td>{{ record.dueAt }}</td>
-            <td>{{ record.overdueDays }} 天</td>
-            <td>¥{{ record.fineAmount }}</td>
-            <td><span class="status">{{ statusText(record.status) }}</span></td>
+            <td>
+              <span class="record-code">#{{ record.id }}</span>
+            </td>
+            <td>
+              <div class="table-main">{{ record.readerName }}</div>
+              <div class="table-sub">@{{ record.readerUsername }}</div>
+            </td>
+            <td>
+              <div class="table-main">{{ record.bookTitle }}</div>
+              <div class="table-sub">{{ record.bookAuthor }} · ISBN {{ record.isbn }}</div>
+            </td>
+            <td>
+              <div class="table-main">{{ formatDate(record.dueAt) }}</div>
+              <div class="table-sub">续借 {{ record.renewCount || 0 }} 次</div>
+            </td>
+            <td :class="{ 'danger-text': record.overdueDays > 0 }">{{ record.overdueDays || 0 }} 天</td>
+            <td>
+              <div class="table-main">{{ formatMoney(record.fineAmount) }}</div>
+              <div class="table-sub">{{ fineText(record.fineStatus) }}</div>
+            </td>
+            <td><span class="status" :class="record.status">{{ statusText(record.status) }}</span></td>
             <td>
               <div class="row-actions">
-                <button class="ghost-btn" type="button" @click="renew(record)">续借</button>
-                <button v-if="canManage" class="ghost-btn" type="button" @click="returnBook(record)">还书</button>
+                <button v-if="record.status !== 'RETURNED'" class="ghost-btn" type="button" @click="renew(record)">续借</button>
+                <button v-if="canManage && record.status !== 'RETURNED'" class="ghost-btn" type="button" @click="returnBook(record)">还书</button>
                 <button v-if="canManage && record.fineStatus === 'UNPAID'" class="ghost-btn" type="button" @click="pay(record)">缴费</button>
               </div>
             </td>
@@ -91,6 +105,22 @@ const emptyTitle = computed(() => status.value ? `暂无${statusText(status.valu
 
 function statusText(value) {
   return { BORROWED: '在借', OVERDUE: '逾期', RETURNED: '已归还' }[value] || value
+}
+
+function fineText(value) {
+  return { NONE: '无罚款', UNPAID: '待缴费', PAID: '已缴清' }[value] || '未登记'
+}
+
+function formatMoney(value) {
+  return `¥${Number(value || 0).toFixed(2)}`
+}
+
+function formatDate(value) {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  const pad = (num) => String(num).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
 async function load() {

@@ -31,7 +31,7 @@
           <div class="notice-wrap">
             <button class="circle-button" type="button" :aria-expanded="noticeOpen" aria-label="查看通知" @click="noticeOpen = !noticeOpen">
               <Bell aria-hidden="true" :size="18" />
-              <span class="dot" aria-hidden="true"></span>
+              <span v-if="hasNotice" class="dot" aria-hidden="true"></span>
             </button>
             <div v-if="noticeOpen" class="notice-popover" role="status">
               <strong>系统通知</strong>
@@ -57,6 +57,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Bell, BookOpen, ClipboardList, LayoutDashboard, LogOut, Search, Shield, UserCog, UserRound } from 'lucide-vue-next'
+import { api } from './api/library'
 import { useAuthStore } from './stores/auth'
 
 const auth = useAuthStore()
@@ -64,6 +65,7 @@ const route = useRoute()
 const router = useRouter()
 const mainPanel = ref(null)
 const noticeOpen = ref(false)
+const noticeSummary = ref(null)
 
 const menu = computed(() => {
   const canManage = ['LIBRARIAN', 'SUPER_ADMIN'].includes(auth.role)
@@ -86,15 +88,61 @@ const roleName = computed(() => ({
 
 const pageTitle = computed(() => menu.value.find((item) => item.path === route.path)?.label || '图书馆管理系统')
 const avatarInitial = computed(() => auth.user?.realName?.slice(0, 1) || 'U')
+const hasNotice = computed(() => {
+  if (!auth.token || route.path === '/login') return false
+  if (!noticeSummary.value) return true
+  return noticeSummary.value.count > 0
+})
 const noticeText = computed(() => {
-  if (auth.role === 'LIBRARIAN') return '今日有 4 条待核验归还记录，请在借阅业务中处理。'
-  if (auth.role === 'SUPER_ADMIN') return '系统配置和操作日志均正常，建议下班前导出一次备份。'
-  return '你有 1 本图书即将到期，可在我的借阅中办理续借。'
+  if (noticeSummary.value?.text) return noticeSummary.value.text
+  if (auth.role === 'LIBRARIAN') return '借阅业务正在同步，请稍后查看待处理记录。'
+  if (auth.role === 'SUPER_ADMIN') return '系统运行状态正在同步，请稍后查看统计与日志。'
+  return '借阅提醒正在同步，请稍后查看我的借阅。'
 })
 
 function logout() {
   auth.logout()
   router.push('/login')
+}
+
+async function loadNotice() {
+  if (!auth.token || route.path === '/login') {
+    noticeSummary.value = null
+    return
+  }
+  try {
+    if (auth.role === 'READER') {
+      const records = (await api.myBorrows({ status: 'BORROWED' })).data || []
+      const now = Date.now()
+      const day = 24 * 60 * 60 * 1000
+      const dueSoon = records.filter((record) => {
+        const due = new Date(record.dueAt).getTime()
+        return !Number.isNaN(due) && due >= now && due - now <= 7 * day
+      }).length
+      const overdue = records.filter((record) => new Date(record.dueAt).getTime() < now).length
+      const count = dueSoon + overdue
+      noticeSummary.value = {
+        count,
+        text: count
+          ? `你有 ${dueSoon} 本图书 7 天内到期，${overdue} 本已超过应还日期，可在我的借阅中处理。`
+          : '当前没有即将到期或逾期图书，借阅状态良好。'
+      }
+      return
+    }
+
+    const stats = (await api.stats()).data
+    const overdue = Number(stats?.overdueBorrows || 0)
+    const fines = Number(stats?.unpaidFines || 0)
+    const count = overdue + (fines > 0 ? 1 : 0)
+    noticeSummary.value = {
+      count,
+      text: count
+        ? `当前有 ${overdue} 条逾期借阅，未缴罚款 ${fines.toFixed(2)} 元，请优先跟进流通业务。`
+        : '当前没有逾期借阅或未缴罚款，流通业务状态正常。'
+    }
+  } catch {
+    noticeSummary.value = null
+  }
 }
 
 watch(
@@ -103,6 +151,13 @@ watch(
     noticeOpen.value = false
     await nextTick()
     mainPanel.value?.scrollTo({ top: 0, left: 0 })
+    await loadNotice()
   }
+)
+
+watch(
+  () => auth.token,
+  loadNotice,
+  { immediate: true }
 )
 </script>

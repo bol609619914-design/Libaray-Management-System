@@ -5,14 +5,20 @@ import com.example.library.config.LibraryProperties;
 import com.example.library.dto.BorrowRequest;
 import com.example.library.entity.Book;
 import com.example.library.entity.BorrowRecord;
+import com.example.library.entity.User;
 import com.example.library.exception.BusinessException;
 import com.example.library.mapper.BookMapper;
 import com.example.library.mapper.BorrowRecordMapper;
+import com.example.library.mapper.UserMapper;
 import com.example.library.security.CurrentUser;
+import com.example.library.vo.BorrowRecordVO;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,34 +26,36 @@ import org.springframework.transaction.annotation.Transactional;
 public class BorrowService {
     private final BorrowRecordMapper borrowRecordMapper;
     private final BookMapper bookMapper;
+    private final UserMapper userMapper;
     private final LibraryProperties properties;
 
-    public BorrowService(BorrowRecordMapper borrowRecordMapper, BookMapper bookMapper, LibraryProperties properties) {
+    public BorrowService(BorrowRecordMapper borrowRecordMapper, BookMapper bookMapper, UserMapper userMapper, LibraryProperties properties) {
         this.borrowRecordMapper = borrowRecordMapper;
         this.bookMapper = bookMapper;
+        this.userMapper = userMapper;
         this.properties = properties;
     }
 
-    public List<BorrowRecord> myRecords(CurrentUser user, String status) {
+    public List<BorrowRecordVO> myRecords(CurrentUser user, String status) {
         LambdaQueryWrapper<BorrowRecord> wrapper = new LambdaQueryWrapper<BorrowRecord>()
                 .eq(BorrowRecord::getUserId, user.id())
                 .orderByDesc(BorrowRecord::getBorrowedAt);
         if (status != null && !status.isBlank()) {
             wrapper.eq(BorrowRecord::getStatus, status);
         }
-        return borrowRecordMapper.selectList(wrapper);
+        return toVOList(borrowRecordMapper.selectList(wrapper));
     }
 
-    public List<BorrowRecord> all(String status) {
+    public List<BorrowRecordVO> all(String status) {
         LambdaQueryWrapper<BorrowRecord> wrapper = new LambdaQueryWrapper<BorrowRecord>().orderByDesc(BorrowRecord::getBorrowedAt);
         if (status != null && !status.isBlank()) {
             wrapper.eq(BorrowRecord::getStatus, status);
         }
-        return borrowRecordMapper.selectList(wrapper);
+        return toVOList(borrowRecordMapper.selectList(wrapper));
     }
 
     @Transactional
-    public BorrowRecord borrow(CurrentUser operator, BorrowRequest request) {
+    public BorrowRecordVO borrow(CurrentUser operator, BorrowRequest request) {
         Long userId = request.userId();
         if ("READER".equals(operator.role())) {
             userId = operator.id();
@@ -78,11 +86,11 @@ public class BorrowService {
         record.setHandledBy(operator.username());
         record.setNote(request.note());
         borrowRecordMapper.insert(record);
-        return record;
+        return toVO(record);
     }
 
     @Transactional
-    public BorrowRecord renew(CurrentUser user, Long recordId) {
+    public BorrowRecordVO renew(CurrentUser user, Long recordId) {
         BorrowRecord record = mustGet(recordId);
         if (!"BORROWED".equals(record.getStatus()) && !"OVERDUE".equals(record.getStatus())) {
             throw new BusinessException("当前状态不可续借");
@@ -97,14 +105,14 @@ public class BorrowService {
         record.setDueAt(record.getDueAt().plusDays(properties.getBorrowing().getDefaultDays()));
         record.setStatus("BORROWED");
         borrowRecordMapper.updateById(record);
-        return record;
+        return toVO(record);
     }
 
     @Transactional
-    public BorrowRecord returnBook(CurrentUser operator, Long recordId) {
+    public BorrowRecordVO returnBook(CurrentUser operator, Long recordId) {
         BorrowRecord record = mustGet(recordId);
         if ("RETURNED".equals(record.getStatus())) {
-            return record;
+            return toVO(record);
         }
         LocalDateTime now = LocalDateTime.now();
         long overdue = Math.max(0, ChronoUnit.DAYS.between(record.getDueAt(), now));
@@ -121,15 +129,15 @@ public class BorrowService {
             book.setAvailableStock((book.getAvailableStock() == null ? 0 : book.getAvailableStock()) + 1);
             bookMapper.updateById(book);
         }
-        return record;
+        return toVO(record);
     }
 
     @Transactional
-    public BorrowRecord markPaid(Long recordId) {
+    public BorrowRecordVO markPaid(Long recordId) {
         BorrowRecord record = mustGet(recordId);
         record.setFineStatus("PAID");
         borrowRecordMapper.updateById(record);
-        return record;
+        return toVO(record);
     }
 
     private BorrowRecord mustGet(Long id) {
@@ -138,5 +146,28 @@ public class BorrowService {
             throw new BusinessException(404, "借阅记录不存在");
         }
         return record;
+    }
+
+    private BorrowRecordVO toVO(BorrowRecord record) {
+        User user = userMapper.selectById(record.getUserId());
+        Book book = bookMapper.selectById(record.getBookId());
+        return BorrowRecordVO.from(
+                record,
+                user == null ? Map.of() : Map.of(user.getId(), user),
+                book == null ? Map.of() : Map.of(book.getId(), book)
+        );
+    }
+
+    private List<BorrowRecordVO> toVOList(List<BorrowRecord> records) {
+        if (records.isEmpty()) {
+            return List.of();
+        }
+        List<Long> userIds = records.stream().map(BorrowRecord::getUserId).distinct().toList();
+        List<Long> bookIds = records.stream().map(BorrowRecord::getBookId).distinct().toList();
+        Map<Long, User> users = userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+        Map<Long, Book> books = bookMapper.selectBatchIds(bookIds).stream()
+                .collect(Collectors.toMap(Book::getId, Function.identity()));
+        return records.stream().map(record -> BorrowRecordVO.from(record, users, books)).toList();
     }
 }

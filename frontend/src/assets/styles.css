@@ -461,6 +461,35 @@ a {
   background: #f7fbff;
 }
 
+.record-code,
+.table-main,
+.danger-text {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.record-code {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: #eef6ff;
+  color: var(--blue);
+  font-size: 0.82rem;
+}
+
+.table-sub {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.danger-text {
+  color: #d83754;
+}
+
 .page-heading {
   padding: 0 var(--content-gutter);
 }
