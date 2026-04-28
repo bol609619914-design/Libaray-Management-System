@@ -20,6 +20,11 @@ export const api = {
   announcements: () => http.get('/announcements'),
   createAnnouncement: (data) => http.post('/announcements', data),
   borrow: (data) => http.post('/borrows', data),
+  uploadCover: (file) => {
+    const data = new FormData()
+    data.append('file', file)
+    return http.post('/uploads/covers', data)
+  },
   myBorrows: (params) => http.get('/borrows/mine', { params }),
   allBorrows: (params) => http.get('/borrows', { params }),
   renew: (id) => http.put(`/borrows/${id}/renew`),

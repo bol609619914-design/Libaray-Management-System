@@ -50,7 +50,8 @@
       </div>
       <div v-if="books.length" class="book-grid">
         <article v-for="book in books" :key="book.id" class="book-card catalog-card">
-          <div class="catalog-cover" :style="{ '--cover': coverColor(book.id) }">
+          <div class="catalog-cover" :class="{ 'has-image': book.coverUrl }" :style="coverStyle(book)">
+            <img v-if="book.coverUrl" :src="assetUrl(book.coverUrl)" :alt="`${book.title}封面`" />
             <span>{{ book.title?.slice(0, 2) }}</span>
           </div>
           <div class="catalog-info">
@@ -85,10 +86,23 @@
   <dialog :open="editing" class="modal">
     <form class="modal-card" @submit.prevent="save">
       <h2>{{ form.id ? '编辑图书' : '新增图书' }}</h2>
-      <label>书名<input v-model="form.title" required /></label>
-      <label>作者<input v-model="form.author" required /></label>
-      <label>ISBN<input v-model="form.isbn" required /></label>
-      <label>库存<input v-model.number="form.totalStock" type="number" min="0" required /></label>
+      <div class="book-editor-grid">
+        <label class="cover-uploader">
+          <span>图书封面</span>
+          <input type="file" accept="image/png,image/jpeg,image/webp" @change="uploadCover" />
+          <div class="cover-preview" :class="{ 'has-image': form.coverUrl }">
+            <img v-if="form.coverUrl" :src="assetUrl(form.coverUrl)" alt="" />
+            <span v-else>上传封面</span>
+          </div>
+          <small>支持 JPG、PNG、WebP，最大 3MB</small>
+        </label>
+        <div class="book-editor-fields">
+          <label>书名<input v-model="form.title" required /></label>
+          <label>作者<input v-model="form.author" required /></label>
+          <label>ISBN<input v-model="form.isbn" required /></label>
+          <label>库存<input v-model.number="form.totalStock" type="number" min="0" required /></label>
+        </div>
+      </div>
       <label>简介<textarea v-model="form.summary" rows="3"></textarea></label>
       <div class="modal-actions">
         <button type="button" class="ghost-btn" @click="closeEditor">取消</button>
@@ -108,17 +122,27 @@ const query = reactive({ keyword: '', categoryId: '', page: 1, size: 20 })
 const books = ref([])
 const categories = ref([])
 const editing = ref(false)
-const form = reactive({ title: '', author: '', isbn: '', totalStock: 1, availableStock: 1, summary: '', status: 'ON_SHELF' })
+const form = reactive({ title: '', author: '', isbn: '', totalStock: 1, availableStock: 1, summary: '', coverUrl: '', status: 'ON_SHELF' })
 const canManage = computed(() => ['LIBRARIAN', 'SUPER_ADMIN'].includes(auth.role))
 const availableTotal = computed(() => books.value.reduce((sum, book) => sum + Number(book.availableStock || 0), 0))
 const palette = ['#eaf3ff', '#e8fff5', '#fff3e5', '#f4f0ff', '#eef2f8', '#e6f7ff']
+
+function coverStyle(book) {
+  return { '--cover': coverColor(book.id) }
+}
 
 function coverColor(id) {
   return palette[Number(id || 0) % palette.length]
 }
 
+function assetUrl(url) {
+  if (!url) return ''
+  if (/^https?:\/\//.test(url)) return url
+  return url
+}
+
 function resetForm() {
-  Object.assign(form, { id: undefined, title: '', author: '', isbn: '', totalStock: 1, availableStock: 1, summary: '', status: 'ON_SHELF' })
+  Object.assign(form, { id: undefined, title: '', author: '', isbn: '', totalStock: 1, availableStock: 1, summary: '', coverUrl: '', status: 'ON_SHELF' })
 }
 
 function edit(book) {
@@ -145,6 +169,14 @@ async function borrow(book) {
   }
   await api.borrow(payload)
   await load()
+}
+
+async function uploadCover(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  const result = await api.uploadCover(file)
+  form.coverUrl = result.data.url
+  event.target.value = ''
 }
 
 async function save() {

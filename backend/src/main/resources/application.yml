@@ -12,6 +12,10 @@ spring:
   jackson:
     time-zone: Asia/Shanghai
     date-format: yyyy-MM-dd HH:mm:ss
+  servlet:
+    multipart:
+      max-file-size: 3MB
+      max-request-size: 4MB
 
 mybatis-plus:
   global-config:
