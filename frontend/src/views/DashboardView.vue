@@ -158,20 +158,20 @@ const readerStats = [
 ]
 const recommendedBooks = [
   { title: '人类简史', author: '尤瓦尔·赫拉利', score: '9.1', cover: '/covers/human-history.png' },
-  { title: '置身事内', author: '中国政府与经济发展', score: '8.7', cover: '/covers/ming-history.png' },
-  { title: '被讨厌的勇气', author: '岸见一郎', score: '8.6', cover: '/covers/ai-data.png' },
-  { title: '乡土中国', author: '费孝通', score: '8.8', cover: '/covers/fortress-literature.png' },
+  { title: '置身事内', author: '中国政府与经济发展', score: '8.7', cover: '/covers/inside-china.png' },
+  { title: '被讨厌的勇气', author: '岸见一郎', score: '8.6', cover: '/covers/courage.png' },
+  { title: '乡土中国', author: '费孝通', score: '8.8', cover: '/covers/rural-china.png' },
   { title: '未来简史', author: '尤瓦尔·赫拉利', score: '8.9', cover: '/covers/future-history.png' },
-  { title: '原则', author: '瑞·达利欧', score: '8.6', cover: '/covers/computer-systems.png' }
+  { title: '原则', author: '瑞·达利欧', score: '8.6', cover: '/covers/principles.png' }
 ]
 const recentBooks = [
   { title: '围城', author: '钱钟书', time: '2024-05-20 15:30', cover: '/covers/fortress-literature.png' },
   { title: '活着', author: '余华', time: '2024-05-19 10:21', cover: '/covers/human-history.png' },
-  { title: '人性的弱点', author: '戴尔·卡耐基', time: '2024-05-18 09:14', cover: '/covers/ai-data.png' }
+  { title: '人性的弱点', author: '戴尔·卡耐基', time: '2024-05-18 09:14', cover: '/covers/courage.png' }
 ]
 const todoItems = [
   { title: '数据库系统概论', code: 'B-20491', note: '预约到馆', stateText: '待取书', state: 'blue', cover: '/covers/computer-systems.png' },
-  { title: '人机交互设计', code: 'A-11352', note: '今日到期', stateText: '待提醒', state: 'orange', cover: '/covers/ai-data.png' },
+  { title: '人机交互设计', code: 'A-11352', note: '今日到期', stateText: '待提醒', state: 'orange', cover: '/covers/courage.png' },
   { title: '云计算导论', code: 'C-01983', note: '归还异常', stateText: '待核验', state: 'red', cover: '/covers/future-history.png' }
 ]
 const purchaseRows = [

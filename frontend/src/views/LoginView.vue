@@ -7,14 +7,7 @@
       </div>
       <h1 id="login-title">现代图书馆管理系统</h1>
       <p>高效 · 智能 · 连接每一座图书馆</p>
-      <div class="login-illustration" aria-hidden="true">
-        <div class="shelf">
-          <span></span><span></span><span></span><span></span>
-        </div>
-        <div class="desk-screen"></div>
-        <div class="desk-base"></div>
-        <div class="light-disc"></div>
-      </div>
+      <img class="login-illustration" src="/login-library-scene.png" alt="" aria-hidden="true" />
     </section>
     <form class="login-card" @submit.prevent="submit" aria-describedby="login-helper">
       <div>
